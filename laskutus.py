@@ -62,7 +62,6 @@ def count_nbr(nbr, amount):
         if i == 100:
             add = ''
         nbr_string = str(nbr) + add + str(i)
-        sum = 0
         kertoimet = (7,3,1)
         summa = sum(kertoimet[i % 3] * int(x) for i, x in enumerate(reversed(nbr_string)))
         check = (10 - (summa % 10)) % 10
