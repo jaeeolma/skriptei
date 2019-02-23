@@ -7,21 +7,14 @@ import datetime
 import time
 from email.mime.text import MIMEText
 from email.header import Header
-from email import Charset
+from email.charset import Charset
 import sys
-reload(sys)  
-sys.setdefaultencoding('utf8')
 
-#TOIMII PARHAITEN PYTHON 2.7.x-versiolla
-#Standardikirjastojen ulkopuolelta tarvii pandasin
-#eli pip install pandas
-
-#koska encodingtunkkaus on kivaa
-ENCODING = 'utf-8' if sys.stdin.encoding in (None, 'ascii') else sys.stdin.encoding
+# NOW WITH PYTHON 3.6 WOOOO
 
 #Tähän omat gmailtiedot
-APP_PWD = 'SALASANA'
-GLB_USER = 'TUNNUS'
+APP_PWD = LAITA
+GLB_USER = OMASI
 
 
 def send_email(recipient, subject, body):
@@ -29,14 +22,14 @@ def send_email(recipient, subject, body):
     """
     gmail_user = GLB_USER
     gmail_pwd = APP_PWD
-    FROM = 'Linkki Rahastonhoitaja'
+    FROM = 'OMA NIMI'
     TO = recipient 
-    SUBJECT = subject.decode(ENCODING)
+    SUBJECT = subject
     TEXT = body
     
     #valmistele viesti
     
-    msg = MIMEText(body.encode('utf-8'), 'plain', 'UTF-8')
+    msg = MIMEText(body, 'plain', 'UTF-8')
     msg['Subject'] = Header(SUBJECT.encode('utf-8'), 'UTF-8').encode()
     msg['From'] = Header(FROM.encode('utf-8'), 'UTF-8').encode()
     msg['to'] = Header(TO.encode('utf-8'), 'UTF-8').encode()
@@ -50,8 +43,8 @@ def send_email(recipient, subject, body):
     except:
         print('failed to send mail to:', recipient)
 
-#laskee halutun määrän viitenumeroita annetun numeron pohjalta
-#voi laskea max 1000 numeroa ilman ongelmia     
+# laskee halutun määrän viitenumeroita annetun numeron pohjalta
+# voi laskea max 1000 numeroa helposti
 def count_nbr(nbr, amount):
     nbrs = []
     i = 0
@@ -94,13 +87,13 @@ def add_invoice_to_text(bodytext, df, i, due):
     """Luo sähköpostiviestin ja liittää laskun siihen
     """
     maksaja = u'Maksaja: ' + df.loc[i, 'Nimi']
-    saaja = u'Saaja: LAITA JÄRJESTÖ TÄHÄN'
-    tili = u'Saajan tilinumero: FI TILINUMERO TÄHÄN'
+    saaja = u'Saaja: TÄYTÄ OMA'
+    tili = u'Saajan tilinumero: TÄYTÄ OMA'
     viite = u'Viitenumero: ' + df.loc[i, 'Viite']
     expdate = datetime.datetime.now() + datetime.timedelta(days=int(due))
     date = u'Eräpäivä: ' + expdate.strftime('%d.%m.%Y')
     summa = u'Maksettava summa: ' + str(df.loc[i, 'Hinta']) + u' \u20ac'
-    sign = u'Terveisin' + '\n' + u'OMA NIMI'+ '\n' +u'Rahastonhoitaja'+ '\n' + u'OMA JÄRJESTÖ'
+    sign = u'Terveisin' + '\n' + u'NIMI'+ '\n' +u'TITTELI'+ '\n' + u'YHTEISÖ'
     code = u'\nVoit maksaa myös käyttämällä alla olevaa virtuaaliviivakoodia:\n' + virtuaaliviivakoodi(df.loc[i, 'Hinta'], df.loc[i,'Viite'], expdate)
     text = """\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s""" % (maksaja, saaja, tili, viite, date, summa, code, sign)
     viesti = bodytext + text
@@ -110,7 +103,7 @@ def virtuaaliviivakoodi(sum, ref, date):
     """Luo virtuaaliviivakoodin laskulle
     """
     ver = '4'
-    tili = 'TÄHÄN TILINUMERO IBAN-MUODOSSA ILMAN FI-ALKUA'
+    tili = 'täytä oma' # Tähän oma IBAN ilman FI-alkua 
     eurot = str(sum)
     sentit = '00'
     vara = '000'
@@ -122,31 +115,26 @@ def virtuaaliviivakoodi(sum, ref, date):
         mon = '0' + mon
     if len(day) == 1:
         day = '0' + day
-    for i in range(20 - len(viite)):
+    for _ in range(20 - len(viite)):
         viite = '0' + viite
-    for i in range(6 - len(eurot)):
+    for _ in range(6 - len(eurot)):
         eurot = '0' + eurot
     code = ver + tili + eurot + sentit + vara + viite + year + mon + day
     return code
     
 def main():
     """Otetaan komennot vastaan ja lähetetään viestit
-    Lähtödatan on oltava xlsx-taulukko, josta löytyy sarakkeet Nimi, Sähköposti ja Hinta
-    Tallentaa uuden taulun.
-    Viestin on oltava .txt -tiedosto
-    Muista tiedostonimissä pääte (.xlsx tai .txt)
     """
-    ref_start = raw_input('Anna viitenumeron alkuosa: ')
-    original_data = raw_input('Anna excelin tiedostonimi: ')
+    ref_start = input('Anna viitenumeron alkuosa: ')
+    original_data = input('Anna excelin tiedostonimi: ')
     df = read_xlsx(original_data)
     nbrs = count_nbr(ref_start, len(df))
-    filename = raw_input('Anna tallennettavan tiedoston nimi: ')
+    filename = input('Anna tallennettavan tiedoston nimi: ')
     combine_nbrs(nbrs, df, filename)
-    duedate = raw_input('Anna maksuajan pituus: ')
-    subject = raw_input('Anna viestin otsikko: ')
-    subject.decode(ENCODING)
-    bodytext = raw_input('Anna viestirungon nimi: ')
-    textfile= open(bodytext, 'r')
+    duedate = input('Anna maksuajan pituus: ')
+    subject = input('Anna viestin otsikko: ')
+    bodytext = input('Anna viestirungon nimi: ')
+    textfile = open(bodytext, 'r', encoding='utf-8')
     teksti = textfile.read()
     for i in range(len(df)):
         text = add_invoice_to_text(teksti, df, i, duedate)
@@ -156,7 +144,6 @@ def main():
         #send_email(df.loc[i, u'Sähköposti'], subject, text)
         print('>>> {}/{} laskua lahetetty'.format(i + 1, len(df)), end='\r')
         sys.stdout.flush()
-        #nukkumaan että varmasti lähtee kaikki
         if i % 20 == 0:
             time.sleep(2)
     print('')
